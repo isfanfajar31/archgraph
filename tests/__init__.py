@@ -1,1 +1,1 @@
-"""Tests for PyArchViz."""
+"""Tests for ArchGraph."""

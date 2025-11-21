@@ -1,7 +1,7 @@
 [project]
-name = "pyarchviz"
+name = "archgraph"
 version = "0.1.0"
-description = "Python Architecture Visualizer - Generate software architecture diagrams from Python code"
+description = "ArchGraph - Generate software architecture diagrams from Python code with AI-powered insights"
 readme = "README.md"
 authors = [
     { name = "Torstein Sørnes", email = "t.soernes@gmail.com" }
@@ -14,6 +14,8 @@ dependencies = [
     "astroid>=4.0.2",
     "graphviz>=0.21",
     "pillow>=12.0.0",
+    "openai>=2.8.1",
+    "python-dotenv>=1.2.1",
 ]
 keywords = ["architecture", "visualization", "diagrams", "uml", "code-analysis"]
 classifiers = [
@@ -26,12 +28,12 @@ classifiers = [
 ]
 
 [project.scripts]
-pyarchviz = "pyarchviz.cli:main"
+archgraph = "archgraph.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/torsteinsornes/pyarchviz"
-Repository = "https://github.com/torsteinsornes/pyarchviz"
-Issues = "https://github.com/torsteinsornes/pyarchviz/issues"
+Homepage = "https://github.com/tsoernes/archgraph"
+Repository = "https://github.com/tsoernes/archgraph"
+Issues = "https://github.com/tsoernes/archgraph/issues"
 
 [build-system]
 requires = ["uv_build>=0.9.7,<0.10.0"]

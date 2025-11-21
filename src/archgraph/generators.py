@@ -5,7 +5,7 @@ from typing import Any
 
 import networkx as nx
 
-from pyarchviz.analyzer import CodeAnalyzer
+from archgraph.analyzer import CodeAnalyzer
 
 
 class DiagramGenerator(ABC):

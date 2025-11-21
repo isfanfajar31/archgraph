@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from pyarchviz.analyzer import CodeAnalyzer
+from archgraph.analyzer import CodeAnalyzer
 
 
 @pytest.fixture

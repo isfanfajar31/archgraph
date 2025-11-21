@@ -1,11 +1,11 @@
-# PyArchViz
+# ArchGraph
 
-**Python Architecture Visualizer** - Generate software architecture diagrams from Python code.
+**Architecture Diagram Generator with AI** - Generate software architecture diagrams from Python code with AI-powered insights.
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-PyArchViz analyzes Python codebases and automatically generates various types of architecture diagrams to help you understand and document your project's structure.
+ArchGraph analyzes Python codebases and automatically generates various types of architecture diagrams to help you understand and document your project's structure. Enhanced with Azure OpenAI integration for intelligent code analysis and recommendations.
 
 ## Features
 
@@ -38,21 +38,31 @@ PyArchViz analyzes Python codebases and automatically generates various types of
 ### Using uv (recommended)
 
 ```bash
-uv pip install pyarchviz
+uv pip install archgraph
 ```
 
 ### Using pip
 
 ```bash
-pip install pyarchviz
+pip install archgraph
 ```
 
 ### From source
 
 ```bash
-git clone https://github.com/torsteinsornes/pyarchviz.git
-cd pyarchviz
+git clone https://github.com/tsoernes/archgraph.git
+cd archgraph
 uv sync
+```
+
+### Configure AI Features (Optional)
+
+For AI-powered analysis, create a `.env` file:
+
+```bash
+# Azure OpenAI credentials
+OAI_GPT4O_mini_18072024_API_KEY=your_api_key
+OAI_GPT4O_mini_18072024_ENDPOINT=your_endpoint
 ```
 
 ## Quick Start
@@ -60,7 +70,13 @@ uv sync
 Generate all diagram types for your project:
 
 ```bash
-pyarchviz generate ./my_project --output ./diagrams
+archgraph generate ./my_project --output ./diagrams
+```
+
+Get AI-powered architecture analysis:
+
+```bash
+archgraph llm-analyze ./my_project
 ```
 
 This will create:
@@ -75,42 +91,42 @@ This will create:
 
 **Basic usage:**
 ```bash
-pyarchviz generate /path/to/project
+archgraph generate /path/to/project
 ```
 
 **Specify output directory and format:**
 ```bash
-pyarchviz generate ./src --output ./docs/diagrams --format plantuml
+archgraph generate ./src --output ./docs/diagrams --format plantuml
 ```
 
 **Generate specific diagram types:**
 ```bash
-pyarchviz generate ./src --class-diagram --dependency-graph
+archgraph generate ./src --class-diagram --dependency-graph
 ```
 
 **Generate all formats:**
 ```bash
-pyarchviz generate ./src --format all
+archgraph generate ./src --format all
 ```
 
 **Exclude test files:**
 ```bash
-pyarchviz generate ./src --exclude "test_*" --exclude "*_test.py"
+archgraph generate ./src --exclude "test_*" --exclude "*_test.py"
 ```
 
 **Configure class diagrams:**
 ```bash
 # Include private members and limit depth
-pyarchviz generate ./src --class-diagram --include-private --max-depth 2
+archgraph generate ./src --class-diagram --include-private --max-depth 2
 
 # Exclude methods and attributes for high-level overview
-pyarchviz generate ./src --class-diagram --no-methods --no-attributes
+archgraph generate ./src --class-diagram --no-methods --no-attributes
 ```
 
 **GraphViz options:**
 ```bash
 # Use different layout engine and output format
-pyarchviz generate ./src --format graphviz \
+archgraph generate ./src --format graphviz \
   --graphviz-layout neato \
   --graphviz-format svg
 ```
@@ -120,7 +136,30 @@ pyarchviz generate ./src --format graphviz \
 Get statistics and insights about your codebase:
 
 ```bash
-pyarchviz analyze ./src
+archgraph analyze ./src
+```
+
+### AI-Powered Analysis (New!)
+
+**Architecture Analysis:**
+```bash
+# Get comprehensive AI analysis of your architecture
+archgraph llm-analyze ./src
+
+# Save analysis to file
+archgraph llm-analyze ./src --save analysis.md
+```
+
+**Diagram Suggestions:**
+```bash
+# Get AI suggestions on which diagrams to generate
+archgraph llm-suggest ./src
+```
+
+**Dependency Explanation:**
+```bash
+# Get natural language explanation of dependencies
+archgraph llm-explain ./src
 ```
 
 This displays:
@@ -132,7 +171,7 @@ This displays:
 ### View Supported Formats
 
 ```bash
-pyarchviz formats
+archgraph formats
 ```
 
 ## Examples
@@ -141,7 +180,7 @@ pyarchviz formats
 
 ```bash
 # Generate dependency graph excluding migrations and tests
-pyarchviz generate ./myapp \
+archgraph generate ./myapp \
   --dependency-graph \
   --exclude "migrations/*" \
   --exclude "*/tests/*" \
@@ -153,7 +192,7 @@ pyarchviz generate ./myapp \
 
 ```bash
 # Generate class diagrams with full details for documentation
-pyarchviz generate ./src/mypackage \
+archgraph generate ./src/mypackage \
   --class-diagram \
   --include-private \
   --format all \
@@ -164,11 +203,21 @@ pyarchviz generate ./src/mypackage \
 
 ```bash
 # Generate simplified package structure for presentations
-pyarchviz generate ./src \
+archgraph generate ./src \
   --package-structure \
   --max-depth 2 \
   --format graphviz \
   --graphviz-format pdf
+```
+
+### Example 4: AI-Powered Analysis
+
+```bash
+# Get comprehensive architecture analysis with AI
+archgraph llm-analyze ./src --save ai-analysis.md
+
+# Get suggestions for what diagrams would be most valuable
+archgraph llm-suggest ./src
 ```
 
 ## Output Format Details
@@ -223,14 +272,15 @@ Direct image output, ready for:
 
 ### Python API
 
-Use PyArchViz programmatically in your Python code:
+Use ArchGraph programmatically in your Python code:
 
 ```python
-from pyarchviz import (
+from archgraph import (
     CodeAnalyzer,
     ClassDiagramGenerator,
     DependencyGraphGenerator,
     MermaidExporter,
+    LLMAnalyzer,
 )
 
 # Analyze code
@@ -252,12 +302,17 @@ exporter.export(graph, "class_diagram.mmd", diagram_type="class")
 # Or get as string
 mermaid_code = exporter.to_string(graph, diagram_type="class")
 print(mermaid_code)
+
+# Use AI analysis (requires Azure OpenAI credentials)
+llm_analyzer = LLMAnalyzer(analyzer)
+results = llm_analyzer.analyze_architecture()
+print(results["summary"])
 ```
 
 ### Custom Filtering
 
 ```python
-from pyarchviz import CodeAnalyzer, DependencyGraphGenerator
+from archgraph import CodeAnalyzer, DependencyGraphGenerator, LLMAnalyzer
 
 analyzer = CodeAnalyzer("./src")
 analyzer.analyze()
@@ -269,6 +324,11 @@ graph = generator.generate(
     include_external=False,
     max_depth=3
 )
+
+# Get AI explanation of dependencies
+llm = LLMAnalyzer(analyzer)
+explanation = llm.explain_dependency_graph()
+print(explanation)
 ```
 
 ## Configuration Options
@@ -312,6 +372,8 @@ graph = generator.generate(
   - astroid - Python AST analysis
   - graphviz - Diagram generation
   - Pillow - Image processing
+  - openai - Azure OpenAI integration (for AI features)
+  - python-dotenv - Environment variable management
 
 For GraphViz output, you also need GraphViz installed on your system:
 
@@ -337,9 +399,15 @@ Download from https://graphviz.org/download/
 
 These features are planned for future releases:
 
+### 🤖 Enhanced AI Features
+- **More AI providers** - Support for other LLM providers (OpenAI, Anthropic, local models)
+- **Fine-tuned analysis** - Domain-specific architecture analysis
+- **AI-generated diagrams** - Let AI decide optimal diagram layouts
+- **Code generation** - Generate boilerplate from architecture descriptions
+
 ### 📈 Advanced Analysis
 - **Complexity metrics visualization** - Cyclomatic complexity, coupling, cohesion
-- **Code smell detection** - Highlight potential issues in architecture
+- **Code smell detection** - Highlight potential issues in architecture (partially implemented with AI)
 - **Change impact analysis** - Show what would be affected by changes
 
 ### 🎨 Enhanced Visualization
@@ -376,6 +444,18 @@ These features are planned for future releases:
 - **Pattern detection** - Identify design patterns in code
 - **Refactoring suggestions** - Based on architecture analysis
 
+## AI Features
+
+ArchGraph includes optional AI-powered features using Azure OpenAI:
+
+- **Architecture Analysis** - Get comprehensive insights about your codebase design
+- **Design Pattern Detection** - Automatically identify patterns in your code
+- **Recommendations** - Receive actionable suggestions for improvements
+- **Diagram Suggestions** - AI recommends which diagrams would be most valuable
+- **Natural Language Explanations** - Understand complex dependencies in plain English
+
+To enable AI features, set up Azure OpenAI credentials in a `.env` file.
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
@@ -400,12 +480,13 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Uses [NetworkX](https://networkx.org/) for graph operations
 - CLI powered by [Click](https://click.palletsprojects.com/) and [Rich](https://rich.readthedocs.io/)
 - Diagram generation with [GraphViz](https://graphviz.org/)
+- AI features powered by [Azure OpenAI](https://azure.microsoft.com/en-us/products/ai-services/openai-service)
 
 ## Links
 
-- **Repository**: https://github.com/torsteinsornes/pyarchviz
-- **Issues**: https://github.com/torsteinsornes/pyarchviz/issues
-- **PyPI**: https://pypi.org/project/pyarchviz/ (coming soon)
+- **Repository**: https://github.com/tsoernes/archgraph
+- **Issues**: https://github.com/tsoernes/archgraph/issues
+- **PyPI**: https://pypi.org/project/archgraph/ (coming soon)
 
 ---
 

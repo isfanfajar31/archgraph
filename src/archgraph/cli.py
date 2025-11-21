@@ -1,4 +1,4 @@
-"""Command-line interface for PyArchViz."""
+"""Command-line interface for ArchGraph."""
 
 import sys
 from pathlib import Path
@@ -9,24 +9,25 @@ from rich.console import Console
 from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
-from pyarchviz.analyzer import CodeAnalyzer
-from pyarchviz.exporters import GraphVizExporter, MermaidExporter, PlantUMLExporter
-from pyarchviz.generators import (
+from archgraph.analyzer import CodeAnalyzer
+from archgraph.exporters import GraphVizExporter, MermaidExporter, PlantUMLExporter
+from archgraph.generators import (
     CallGraphGenerator,
     ClassDiagramGenerator,
     DependencyGraphGenerator,
     PackageStructureGenerator,
 )
+from archgraph.llm_analyzer import LLMAnalyzer
 
 console = Console()
 
 
 @click.group()
-@click.version_option(version="0.1.0", prog_name="pyarchviz")
+@click.version_option(version="0.1.0", prog_name="archgraph")
 def main() -> None:
-    """PyArchViz - Python Architecture Visualizer.
+    """ArchGraph - Architecture Diagram Generator with AI.
 
-    Generate software architecture diagrams from Python code.
+    Generate software architecture diagrams from Python code with AI-powered insights.
     """
     pass
 
@@ -432,6 +433,183 @@ def _generate_package_structure(
         if isinstance(exporter, MermaidExporter):
             exporter_options["diagram_type"] = "graph"
         exporter.export(graph, output_path, **exporter_options)
+
+
+@main.command()
+@click.argument("path", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--exclude",
+    "-e",
+    multiple=True,
+    help="Patterns to exclude",
+)
+@click.option(
+    "--save",
+    "-s",
+    type=click.Path(path_type=Path),
+    help="Save analysis to file",
+)
+def llm_analyze(path: Path, exclude: tuple[str, ...], save: Path | None) -> None:
+    """Analyze code architecture using AI (requires Azure OpenAI credentials).
+
+    PATH: Directory containing Python code to analyze
+    """
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            # Analyze code
+            task = progress.add_task("[cyan]Analyzing Python code...", total=None)
+            analyzer = CodeAnalyzer(path)
+            analyzer.analyze(exclude_patterns=list(exclude))
+            progress.update(task, completed=True)
+
+            # Run LLM analysis
+            task = progress.add_task("[cyan]Running AI-powered analysis...", total=None)
+            llm_analyzer = LLMAnalyzer(analyzer)
+            results = llm_analyzer.analyze_architecture()
+            progress.update(task, completed=True)
+
+        # Display results
+        if "error" in results:
+            console.print(f"[red]✗[/red] {results['error']}", style="bold red")
+            if "OPENAI" in results["error"]:
+                console.print(
+                    "\n[yellow]Tip:[/yellow] Set Azure OpenAI credentials in .env file:"
+                )
+                console.print("  OAI_GPT4O_06082024_API_KEY=your_key")
+                console.print("  OAI_GPT4O_06082024_ENDPOINT=your_endpoint")
+            sys.exit(1)
+
+        console.print("\n[bold cyan]AI Architecture Analysis[/bold cyan]\n")
+
+        # Summary
+        if results.get("summary"):
+            console.print("[bold]Summary:[/bold]")
+            console.print(results["summary"])
+            console.print()
+
+        # Patterns
+        if results.get("patterns"):
+            console.print("[bold]Design Patterns Detected:[/bold]")
+            for pattern in results["patterns"]:
+                console.print(f"  • {pattern}")
+            console.print()
+
+        # Issues
+        if results.get("issues"):
+            console.print("[bold yellow]Potential Issues:[/bold yellow]")
+            for issue in results["issues"]:
+                console.print(f"  ⚠ {issue}")
+            console.print()
+
+        # Recommendations
+        if results.get("recommendations"):
+            console.print("[bold green]Recommendations:[/bold green]")
+            for rec in results["recommendations"]:
+                console.print(f"  ✓ {rec}")
+            console.print()
+
+        # Save to file if requested
+        if save:
+            save.parent.mkdir(parents=True, exist_ok=True)
+            with open(save, "w", encoding="utf-8") as f:
+                f.write("# AI Architecture Analysis\n\n")
+                f.write(f"## Summary\n{results.get('summary', 'N/A')}\n\n")
+                f.write("## Design Patterns\n")
+                for p in results.get("patterns", []):
+                    f.write(f"- {p}\n")
+                f.write("\n## Issues\n")
+                for i in results.get("issues", []):
+                    f.write(f"- {i}\n")
+                f.write("\n## Recommendations\n")
+                for r in results.get("recommendations", []):
+                    f.write(f"- {r}\n")
+            console.print(f"[blue]→[/blue] Analysis saved to: {save.resolve()}")
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Error: {e}", style="bold red")
+        sys.exit(1)
+
+
+@main.command()
+@click.argument("path", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--exclude",
+    "-e",
+    multiple=True,
+    help="Patterns to exclude",
+)
+def llm_suggest(path: Path, exclude: tuple[str, ...]) -> None:
+    """Get AI suggestions for which diagrams to generate.
+
+    PATH: Directory containing Python code to analyze
+    """
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("[cyan]Analyzing code structure...", total=None)
+            analyzer = CodeAnalyzer(path)
+            analyzer.analyze(exclude_patterns=list(exclude))
+            progress.update(task, completed=True)
+
+            task = progress.add_task("[cyan]Getting AI suggestions...", total=None)
+            llm_analyzer = LLMAnalyzer(analyzer)
+            result = llm_analyzer.suggest_diagram_focus()
+            progress.update(task, completed=True)
+
+        if "error" in result:
+            console.print(f"[red]✗[/red] {result['error']}", style="bold red")
+            sys.exit(1)
+
+        console.print("\n[bold cyan]AI Diagram Suggestions[/bold cyan]\n")
+        console.print(result.get("suggestions", "No suggestions available"))
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Error: {e}", style="bold red")
+        sys.exit(1)
+
+
+@main.command()
+@click.argument("path", type=click.Path(exists=True, path_type=Path))
+@click.option(
+    "--exclude",
+    "-e",
+    multiple=True,
+    help="Patterns to exclude",
+)
+def llm_explain(path: Path, exclude: tuple[str, ...]) -> None:
+    """Get natural language explanation of code dependencies.
+
+    PATH: Directory containing Python code to analyze
+    """
+    try:
+        with Progress(
+            SpinnerColumn(),
+            TextColumn("[progress.description]{task.description}"),
+            console=console,
+        ) as progress:
+            task = progress.add_task("[cyan]Analyzing dependencies...", total=None)
+            analyzer = CodeAnalyzer(path)
+            analyzer.analyze(exclude_patterns=list(exclude))
+            progress.update(task, completed=True)
+
+            task = progress.add_task("[cyan]Generating explanation...", total=None)
+            llm_analyzer = LLMAnalyzer(analyzer)
+            explanation = llm_analyzer.explain_dependency_graph()
+            progress.update(task, completed=True)
+
+        console.print("\n[bold cyan]Dependency Structure Explanation[/bold cyan]\n")
+        console.print(explanation)
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Error: {e}", style="bold red")
+        sys.exit(1)
 
 
 if __name__ == "__main__":

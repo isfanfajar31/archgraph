@@ -1,19 +1,20 @@
-"""PyArchViz - Python Architecture Visualizer
+"""ArchGraph - Architecture Diagram Generator with AI
 
-Generate software architecture diagrams from Python code.
+Generate software architecture diagrams from Python code with AI-powered insights.
 """
 
 __version__ = "0.1.0"
 __author__ = "Torstein Sørnes"
 
-from pyarchviz.analyzer import CodeAnalyzer
-from pyarchviz.exporters import DiagramExporter
-from pyarchviz.generators import (
+from archgraph.analyzer import CodeAnalyzer
+from archgraph.exporters import DiagramExporter
+from archgraph.generators import (
     CallGraphGenerator,
     ClassDiagramGenerator,
     DependencyGraphGenerator,
     PackageStructureGenerator,
 )
+from archgraph.llm_analyzer import LLMAnalyzer
 
 __all__ = [
     "CodeAnalyzer",
@@ -22,4 +23,5 @@ __all__ = [
     "CallGraphGenerator",
     "PackageStructureGenerator",
     "DiagramExporter",
+    "LLMAnalyzer",
 ]
