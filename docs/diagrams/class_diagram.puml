@@ -1,0 +1,67 @@
+@startuml
+
+class CodeAnalyzer {
+  +analyze(self, exclude_patterns): None
+  +get_class_info(self, module_name, class_name): dict[str, Any]
+  +get_dependencies(self): dict[str, set[str]]
+  +get_package_structure(self): dict[str, Any]
+}
+
+class DiagramGenerator {
+  +generate(self): nx.DiGraph
+}
+
+class ClassDiagramGenerator {
+  +generate(self, include_methods, include_attributes, include_private, max_depth): nx.DiGraph
+}
+
+class DependencyGraphGenerator {
+  +generate(self, group_by_package, include_external, max_depth): nx.DiGraph
+}
+
+class CallGraphGenerator {
+  +generate(self, focus_module, include_external, max_depth): nx.DiGraph
+}
+
+class PackageStructureGenerator {
+  +generate(self, max_depth, show_empty): nx.DiGraph
+}
+
+class DiagramExporter {
+  +export(self, graph, output_path): None
+  +to_string(self, graph): str
+}
+
+class MermaidExporter {
+  +export(self, graph, output_path): None
+  +to_string(self, graph): str
+}
+
+class PlantUMLExporter {
+  +export(self, graph, output_path): None
+  +to_string(self, graph): str
+}
+
+class GraphVizExporter {
+  +export(self, graph, output_path): None
+  +to_string(self, graph): str
+}
+
+class LLMAnalyzer {
+  +analyze_architecture(self, max_tokens): dict[str, Any]
+  +analyze_class_design(self, module_name, class_name): dict[str, Any]
+  +suggest_diagram_focus(self): dict[str, Any]
+  +explain_dependency_graph(self): str
+}
+
+DiagramGenerator --|> abc.ABC
+ClassDiagramGenerator --|> DiagramGenerator
+DependencyGraphGenerator --|> DiagramGenerator
+CallGraphGenerator --|> DiagramGenerator
+PackageStructureGenerator --|> DiagramGenerator
+DiagramExporter --|> abc.ABC
+MermaidExporter --|> DiagramExporter
+PlantUMLExporter --|> DiagramExporter
+GraphVizExporter --|> DiagramExporter
+
+@enduml
