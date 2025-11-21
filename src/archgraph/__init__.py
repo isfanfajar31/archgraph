@@ -7,7 +7,7 @@ __version__ = "0.1.0"
 __author__ = "Torstein Sørnes"
 
 from archgraph.analyzer import CodeAnalyzer
-from archgraph.exporters import DiagramExporter
+from archgraph.exporters import DiagramExporter, StructurizrExporter
 from archgraph.generators import (
     CallGraphGenerator,
     ClassDiagramGenerator,
@@ -23,5 +23,6 @@ __all__ = [
     "CallGraphGenerator",
     "PackageStructureGenerator",
     "DiagramExporter",
+    "StructurizrExporter",
     "LLMAnalyzer",
 ]

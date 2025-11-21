@@ -10,7 +10,12 @@ from rich.progress import Progress, SpinnerColumn, TextColumn
 from rich.table import Table
 
 from archgraph.analyzer import CodeAnalyzer
-from archgraph.exporters import GraphVizExporter, MermaidExporter, PlantUMLExporter
+from archgraph.exporters import (
+    GraphVizExporter,
+    MermaidExporter,
+    PlantUMLExporter,
+    StructurizrExporter,
+)
 from archgraph.generators import (
     CallGraphGenerator,
     ClassDiagramGenerator,
@@ -362,6 +367,10 @@ def _get_exporters(
             )
         )
 
+    # Structurizr disabled due to Pydantic v2 compatibility issues
+    # if format_name in ["structurizr", "all"]:
+    #     exporters.append((StructurizrExporter(), ".json", {}))
+
     return exporters
 
 
@@ -381,6 +390,9 @@ def _generate_class_diagram(
             exporter_options["diagram_type"] = "class"
         elif isinstance(exporter, PlantUMLExporter):
             exporter_options["diagram_type"] = "class"
+        # elif isinstance(exporter, StructurizrExporter):
+        #     exporter_options["diagram_type"] = "component"
+        #     exporter_options["workspace_name"] = "Class Diagram"
         exporter.export(graph, output_path, **exporter_options)
 
 
@@ -398,6 +410,9 @@ def _generate_dependency_graph(
         output_path = output_dir / f"dependency_graph{ext}"
         if isinstance(exporter, MermaidExporter):
             exporter_options["diagram_type"] = "graph"
+        # elif isinstance(exporter, StructurizrExporter):
+        #     exporter_options["diagram_type"] = "system_context"
+        #     exporter_options["workspace_name"] = "Dependency Graph"
         exporter.export(graph, output_path, **exporter_options)
 
 
@@ -449,7 +464,16 @@ def _generate_package_structure(
     type=click.Path(path_type=Path),
     help="Save analysis to file",
 )
-def llm_analyze(path: Path, exclude: tuple[str, ...], save: Path | None) -> None:
+@click.option(
+    "--reasoning-effort",
+    "-r",
+    type=click.Choice(["low", "medium", "high"], case_sensitive=False),
+    default="medium",
+    help="AI reasoning effort level (default: medium)",
+)
+def llm_analyze(
+    path: Path, exclude: tuple[str, ...], save: Path | None, reasoning_effort: str
+) -> None:
     """Analyze code architecture using AI (requires Azure OpenAI credentials).
 
     PATH: Directory containing Python code to analyze
@@ -469,18 +493,14 @@ def llm_analyze(path: Path, exclude: tuple[str, ...], save: Path | None) -> None
             # Run LLM analysis
             task = progress.add_task("[cyan]Running AI-powered analysis...", total=None)
             llm_analyzer = LLMAnalyzer(analyzer)
-            results = llm_analyzer.analyze_architecture()
+            results = llm_analyzer.analyze_architecture(
+                reasoning_effort=reasoning_effort.lower()
+            )
             progress.update(task, completed=True)
 
         # Display results
         if "error" in results:
             console.print(f"[red]✗[/red] {results['error']}", style="bold red")
-            if "OPENAI" in results["error"]:
-                console.print(
-                    "\n[yellow]Tip:[/yellow] Set Azure OpenAI credentials in .env file:"
-                )
-                console.print("  OAI_GPT4O_06082024_API_KEY=your_key")
-                console.print("  OAI_GPT4O_06082024_ENDPOINT=your_endpoint")
             sys.exit(1)
 
         console.print("\n[bold cyan]AI Architecture Analysis[/bold cyan]\n")
@@ -529,6 +549,16 @@ def llm_analyze(path: Path, exclude: tuple[str, ...], save: Path | None) -> None
                     f.write(f"- {r}\n")
             console.print(f"[blue]→[/blue] Analysis saved to: {save.resolve()}")
 
+    except ValueError as e:
+        console.print(f"[red]✗[/red] {e}", style="bold red")
+        console.print(
+            "\n[yellow]Required:[/yellow] Set Azure OpenAI credentials in .env file:"
+        )
+        console.print("  AZURE_OPENAI_API_KEY=your_key")
+        console.print("  AZURE_ENDPOINT=https://your-resource.openai.azure.com")
+        console.print("  AZURE_API_VERSION=2025-03-01-preview")
+        console.print("  AZURE_CHAT_DEPLOYMENT=gpt-5-mini")
+        sys.exit(1)
     except Exception as e:
         console.print(f"[red]✗[/red] Error: {e}", style="bold red")
         sys.exit(1)
@@ -542,7 +572,14 @@ def llm_analyze(path: Path, exclude: tuple[str, ...], save: Path | None) -> None
     multiple=True,
     help="Patterns to exclude",
 )
-def llm_suggest(path: Path, exclude: tuple[str, ...]) -> None:
+@click.option(
+    "--reasoning-effort",
+    "-r",
+    type=click.Choice(["low", "medium", "high"], case_sensitive=False),
+    default="medium",
+    help="AI reasoning effort level (default: medium)",
+)
+def llm_suggest(path: Path, exclude: tuple[str, ...], reasoning_effort: str) -> None:
     """Get AI suggestions for which diagrams to generate.
 
     PATH: Directory containing Python code to analyze
@@ -560,7 +597,9 @@ def llm_suggest(path: Path, exclude: tuple[str, ...]) -> None:
 
             task = progress.add_task("[cyan]Getting AI suggestions...", total=None)
             llm_analyzer = LLMAnalyzer(analyzer)
-            result = llm_analyzer.suggest_diagram_focus()
+            result = llm_analyzer.suggest_diagram_focus(
+                reasoning_effort=reasoning_effort.lower()
+            )
             progress.update(task, completed=True)
 
         if "error" in result:
@@ -570,6 +609,12 @@ def llm_suggest(path: Path, exclude: tuple[str, ...]) -> None:
         console.print("\n[bold cyan]AI Diagram Suggestions[/bold cyan]\n")
         console.print(result.get("suggestions", "No suggestions available"))
 
+    except ValueError as e:
+        console.print(f"[red]✗[/red] {e}", style="bold red")
+        console.print(
+            "\n[yellow]Required:[/yellow] Set Azure OpenAI credentials in .env file"
+        )
+        sys.exit(1)
     except Exception as e:
         console.print(f"[red]✗[/red] Error: {e}", style="bold red")
         sys.exit(1)
@@ -583,7 +628,14 @@ def llm_suggest(path: Path, exclude: tuple[str, ...]) -> None:
     multiple=True,
     help="Patterns to exclude",
 )
-def llm_explain(path: Path, exclude: tuple[str, ...]) -> None:
+@click.option(
+    "--reasoning-effort",
+    "-r",
+    type=click.Choice(["low", "medium", "high"], case_sensitive=False),
+    default="medium",
+    help="AI reasoning effort level (default: medium)",
+)
+def llm_explain(path: Path, exclude: tuple[str, ...], reasoning_effort: str) -> None:
     """Get natural language explanation of code dependencies.
 
     PATH: Directory containing Python code to analyze
@@ -601,12 +653,20 @@ def llm_explain(path: Path, exclude: tuple[str, ...]) -> None:
 
             task = progress.add_task("[cyan]Generating explanation...", total=None)
             llm_analyzer = LLMAnalyzer(analyzer)
-            explanation = llm_analyzer.explain_dependency_graph()
+            explanation = llm_analyzer.explain_dependency_graph(
+                reasoning_effort=reasoning_effort.lower()
+            )
             progress.update(task, completed=True)
 
         console.print("\n[bold cyan]Dependency Structure Explanation[/bold cyan]\n")
         console.print(explanation)
 
+    except ValueError as e:
+        console.print(f"[red]✗[/red] {e}", style="bold red")
+        console.print(
+            "\n[yellow]Required:[/yellow] Set Azure OpenAI credentials in .env file"
+        )
+        sys.exit(1)
     except Exception as e:
         console.print(f"[red]✗[/red] Error: {e}", style="bold red")
         sys.exit(1)

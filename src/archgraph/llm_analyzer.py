@@ -29,25 +29,37 @@ class LLMAnalyzer:
         """Initialize Azure OpenAI client.
 
         Returns:
-            AzureOpenAI client or None if credentials not available
+            AzureOpenAI client
+
+        Raises:
+            ValueError: If credentials not configured
         """
-        api_key = os.getenv("OAI_GPT4O_mini_18072024_API_KEY")
-        endpoint = os.getenv("OAI_GPT4O_mini_18072024_ENDPOINT")
+        api_key = os.getenv("AZURE_OPENAI_API_KEY")
+        endpoint = os.getenv("AZURE_ENDPOINT")
+        api_version = os.getenv("AZURE_API_VERSION", "2025-03-01-preview")
 
         if not api_key or not endpoint:
-            return None
+            raise ValueError(
+                "Azure OpenAI credentials required. Set AZURE_OPENAI_API_KEY, "
+                "AZURE_ENDPOINT, and optionally AZURE_API_VERSION in .env file"
+            )
 
         return AzureOpenAI(
             api_key=api_key,
-            api_version="2024-02-15-preview",
+            api_version=api_version,
             azure_endpoint=endpoint,
         )
 
-    def analyze_architecture(self, max_tokens: int = 4000) -> dict[str, Any]:
+    def analyze_architecture(
+        self,
+        max_completion_tokens: int = 4000,
+        reasoning_effort: str = "medium",
+    ) -> dict[str, Any]:
         """Analyze the overall architecture using LLM.
 
         Args:
-            max_tokens: Maximum tokens for response
+            max_completion_tokens: Maximum tokens for response
+            reasoning_effort: Reasoning effort level ("low", "medium", "high")
 
         Returns:
             Dictionary with analysis results including:
@@ -56,14 +68,6 @@ class LLMAnalyzer:
             - issues: Potential architectural issues
             - recommendations: Suggested improvements
         """
-        if not self.client:
-            return {
-                "error": "Azure OpenAI credentials not configured",
-                "summary": "",
-                "patterns": [],
-                "issues": [],
-                "recommendations": [],
-            }
 
         # Gather code structure information
         structure_info = self._gather_structure_info()
@@ -72,8 +76,9 @@ class LLMAnalyzer:
         prompt = self._create_architecture_prompt(structure_info)
 
         try:
+            deployment = os.getenv("AZURE_CHAT_DEPLOYMENT", "gpt-5-mini")
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=deployment,
                 messages=[
                     {
                         "role": "system",
@@ -81,8 +86,8 @@ class LLMAnalyzer:
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=max_tokens,
-                temperature=0.7,
+                max_completion_tokens=max_completion_tokens,
+                reasoning_effort=reasoning_effort,
             )
 
             content = response.choices[0].message.content
@@ -97,18 +102,22 @@ class LLMAnalyzer:
                 "recommendations": [],
             }
 
-    def analyze_class_design(self, module_name: str, class_name: str) -> dict[str, Any]:
+    def analyze_class_design(
+        self,
+        module_name: str,
+        class_name: str,
+        reasoning_effort: str = "medium",
+    ) -> dict[str, Any]:
         """Analyze a specific class design using LLM.
 
         Args:
             module_name: Module containing the class
             class_name: Name of the class to analyze
+            reasoning_effort: Reasoning effort level ("low", "medium", "high")
 
         Returns:
             Dictionary with class analysis including design feedback
         """
-        if not self.client:
-            return {"error": "Azure OpenAI credentials not configured"}
 
         class_info = self.analyzer.get_class_info(module_name, class_name)
         if not class_info:
@@ -138,8 +147,9 @@ Provide:
 """
 
         try:
+            deployment = os.getenv("AZURE_CHAT_DEPLOYMENT", "gpt-5-mini")
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=deployment,
                 messages=[
                     {
                         "role": "system",
@@ -147,8 +157,8 @@ Provide:
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=1500,
-                temperature=0.7,
+                max_completion_tokens=1500,
+                reasoning_effort=reasoning_effort,
             )
 
             return {"analysis": response.choices[0].message.content}
@@ -156,14 +166,15 @@ Provide:
         except Exception as e:
             return {"error": f"LLM analysis failed: {str(e)}"}
 
-    def suggest_diagram_focus(self) -> dict[str, Any]:
+    def suggest_diagram_focus(self, reasoning_effort: str = "medium") -> dict[str, Any]:
         """Use LLM to suggest what to focus on in diagrams.
+
+        Args:
+            reasoning_effort: Reasoning effort level ("low", "medium", "high")
 
         Returns:
             Dictionary with suggestions for diagram generation
         """
-        if not self.client:
-            return {"error": "Azure OpenAI credentials not configured"}
 
         structure_info = self._gather_structure_info()
         dependencies = self.analyzer.get_dependencies()
@@ -190,8 +201,9 @@ Be specific and actionable.
 """
 
         try:
+            deployment = os.getenv("AZURE_CHAT_DEPLOYMENT", "gpt-5-mini")
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=deployment,
                 messages=[
                     {
                         "role": "system",
@@ -199,8 +211,8 @@ Be specific and actionable.
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=1000,
-                temperature=0.7,
+                max_completion_tokens=1000,
+                reasoning_effort=reasoning_effort,
             )
 
             return {"suggestions": response.choices[0].message.content}
@@ -208,14 +220,15 @@ Be specific and actionable.
         except Exception as e:
             return {"error": f"LLM analysis failed: {str(e)}"}
 
-    def explain_dependency_graph(self) -> str:
+    def explain_dependency_graph(self, reasoning_effort: str = "medium") -> str:
         """Generate natural language explanation of dependency relationships.
+
+        Args:
+            reasoning_effort: Reasoning effort level ("low", "medium", "high")
 
         Returns:
             Human-readable explanation of dependencies
         """
-        if not self.client:
-            return "Azure OpenAI credentials not configured"
 
         dependencies = self.analyzer.get_dependencies()
 
@@ -233,8 +246,9 @@ Write in clear, accessible language.
 """
 
         try:
+            deployment = os.getenv("AZURE_CHAT_DEPLOYMENT", "gpt-5-mini")
             response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                model=deployment,
                 messages=[
                     {
                         "role": "system",
@@ -242,8 +256,8 @@ Write in clear, accessible language.
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_tokens=1500,
-                temperature=0.7,
+                max_completion_tokens=1500,
+                reasoning_effort=reasoning_effort,
             )
 
             return response.choices[0].message.content or "No explanation generated"
