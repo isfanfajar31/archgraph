@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to PyArchViz will be documented in this file.
+All notable changes to ArchGraph will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
@@ -8,14 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Planned Features
+- Support for multiple AI providers (OpenAI, Anthropic, local models)
+- Fine-tuned domain-specific architecture analysis
+- AI-generated optimal diagram layouts
+- Code generation from architecture descriptions
 - Interactive HTML diagrams with zoom and navigation
 - Watch mode for automatic diagram regeneration
-- Complexity metrics visualization
+- Complexity metrics visualization (partially via AI)
 - Multi-language support (JavaScript, TypeScript, Java)
 - GitHub Action for CI/CD integration
 - Sequence diagram generation
 - State diagram generation
 - IDE plugins (VS Code, PyCharm)
+
+## [0.2.0] - 2024-11-21
+
+### Added
+- **AI-Powered Analysis** using Azure OpenAI GPT-4o-mini
+  - `llm-analyze` command for comprehensive architecture analysis
+  - `llm-suggest` command for AI-powered diagram recommendations
+  - `llm-explain` command for natural language dependency explanations
+- New `LLMAnalyzer` class for intelligent code insights
+- Design pattern detection via AI
+- Architectural issue identification and recommendations
+- Natural language explanations of code structure
+
+### Changed
+- **Project renamed from PyArchViz to ArchGraph**
+- Updated all imports and module references
+- Enhanced CLI with AI-powered commands
+- Improved documentation with AI feature descriptions
+
+### Added Dependencies
+- `openai` - Azure OpenAI integration
+- `python-dotenv` - Environment variable management
 
 ## [0.1.0] - 2024-11-21
 
@@ -61,5 +87,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Rich for terminal formatting
 - GraphViz Python bindings for image generation
 
-[Unreleased]: https://github.com/tsoernes/pyarchviz/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/tsoernes/pyarchviz/releases/tag/v0.1.0
+[Unreleased]: https://github.com/tsoernes/archgraph/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/tsoernes/archgraph/releases/tag/v0.2.0
+[0.1.0]: https://github.com/tsoernes/archgraph/releases/tag/v0.1.0
