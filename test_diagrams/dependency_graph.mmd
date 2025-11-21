@@ -1,0 +1,9 @@
+graph TD
+    main("main")
+    models("models")
+    services("services")
+    utils("utils")
+    main -->|imports| models
+    main -->|imports| services
+    main -->|imports| utils
+    services -->|imports| models

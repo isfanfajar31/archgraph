@@ -1,0 +1,74 @@
+classDiagram
+    class models_UserRole {
+        +ADMIN
+        +USER
+        +GUEST
+    }
+    class models_OrderStatus {
+        +PENDING
+        +PROCESSING
+        +COMPLETED
+        +CANCELLED
+    }
+    class models_User {
+        +is_admin(self) bool
+        +validate_email(self) bool
+    }
+    class models_Product {
+        +is_available(self) bool
+        +calculate_discount_price(self, discount_percent) float
+    }
+    class models_Order {
+        +add_product(self, product) None
+        +remove_product(self, product_id) bool
+        +calculate_total(self) float
+    }
+    class models_PaymentResult {
+        +is_successful(self) bool
+    }
+    class services_UserService {
+        +create_user(self, user) User
+        +get_user(self, user_id) User | None
+        +update_user(self, user_id) User | None
+        +delete_user(self, user_id) bool
+        +list_users(self, role) list[User]
+    }
+    class services_OrderService {
+        +create_order(self, order) Order
+        +get_order(self, order_id) Order | None
+        +update_order_status(self, order_id, status) Order | None
+        +cancel_order(self, order_id) bool
+        +get_orders_by_user(self, user_id) list[Order]
+        +get_orders_by_status(self, status) list[Order]
+    }
+    class services_PaymentProcessor {
+        +process_payment(self, order) PaymentResult
+        +refund_payment(self, transaction_id, amount) PaymentResult
+        +get_transaction(self, transaction_id) PaymentResult | None
+        +verify_payment(self, transaction_id) bool
+    }
+    class utils_Logger {
+        +debug(self, message) None
+        +info(self, message) None
+        +warning(self, message) None
+        +error(self, message) None
+        +critical(self, message) None
+    }
+    class utils_ConfigManager {
+        +load_config(cls, config_path) 'ConfigManager'
+        +get(self, key, default) Any
+        +set(self, key, value) None
+    }
+    class utils_DateTimeHelper {
+        +now() datetime
+        +format_datetime(dt, format_str) str
+        +parse_datetime(dt_str, format_str) datetime
+        +time_ago(dt) str
+    }
+    class utils_Validator {
+        +is_valid_email(email) bool
+        +is_valid_phone(phone) bool
+        +is_valid_url(url) bool
+    }
+    models_UserRole --|> enum_Enum
+    models_OrderStatus --|> enum_Enum
