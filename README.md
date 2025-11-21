@@ -1,11 +1,12 @@
 # ArchGraph
 
-**Architecture Diagram Generator with AI** - Generate software architecture diagrams from Python code with AI-powered insights.
+**Architecture Diagram Generator with GPT-5 AI** - Generate software architecture diagrams from Python code with GPT-5-powered insights.
 
 [![Python 3.13+](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![MCP Server](https://img.shields.io/badge/MCP-Server-blue.svg)](https://modelcontextprotocol.io/)
 
-ArchGraph analyzes Python codebases and automatically generates various types of architecture diagrams to help you understand and document your project's structure. Enhanced with Azure OpenAI integration for intelligent code analysis and recommendations.
+ArchGraph analyzes Python codebases and automatically generates various types of architecture diagrams to help you understand and document your project's structure. Enhanced with Azure OpenAI GPT-5-mini integration for intelligent code analysis and recommendations. Includes Model Context Protocol (MCP) server for seamless integration with AI assistants.
 
 ## Features
 
@@ -33,6 +34,20 @@ ArchGraph analyzes Python codebases and automatically generates various types of
   - Detailed code analysis and statistics
   - Batch generation of multiple diagram types
 
+- 🤖 **GPT-5-Mini AI Analysis** (Required)
+  - Comprehensive architecture analysis with reasoning effort control
+  - Design pattern detection
+  - Architectural issue identification
+  - Actionable improvement recommendations
+  - Natural language dependency explanations
+  - AI-powered diagram suggestions
+
+- 🔌 **MCP Server Integration**
+  - FastMCP-based Model Context Protocol server
+  - 7 tools for AI assistants (Claude Desktop, Cline, etc.)
+  - Seamless integration with LLM workflows
+  - Automatic code analysis and diagram generation
+
 ## Installation
 
 ### Using uv (recommended)
@@ -55,14 +70,56 @@ cd archgraph
 uv sync
 ```
 
-### Configure AI Features (Optional)
+### Configure AI Features (Required)
 
-For AI-powered analysis, create a `.env` file:
+AI features are **required** in ArchGraph. Create a `.env` file:
 
 ```bash
-# Azure OpenAI credentials
-OAI_GPT4O_mini_18072024_API_KEY=your_api_key
-OAI_GPT4O_mini_18072024_ENDPOINT=your_endpoint
+# Azure OpenAI GPT-5 credentials (REQUIRED)
+AZURE_OPENAI_API_KEY=your_api_key
+AZURE_ENDPOINT=https://your-resource.openai.azure.com
+AZURE_API_VERSION=2025-03-01-preview
+AZURE_CHAT_DEPLOYMENT=gpt-5-mini
+```
+
+### MCP Server Setup
+
+To use ArchGraph with AI assistants (Claude Desktop, Cline, Zed, etc.), add to your MCP configuration:
+
+```json
+{
+  "mcpServers": {
+    "archgraph": {
+      "enabled": true,
+      "source": "custom",
+      "command": "uv",
+      "args": [
+        "run",
+        "--project",
+        "/home/torstein.sornes/code/archgraph",
+        "python",
+        "-m",
+        "archgraph.mcp_server"
+      ],
+      "env": {
+        "AZURE_OPENAI_API_KEY": "your_api_key",
+        "AZURE_ENDPOINT": "https://your-resource.openai.azure.com",
+        "AZURE_API_VERSION": "2025-03-01-preview",
+        "AZURE_CHAT_DEPLOYMENT": "gpt-5-mini"
+      }
+    }
+  }
+}
+```
+
+See [docs/MCP_SETUP.md](docs/MCP_SETUP.md) for detailed MCP server configuration and usage.
+```
+
+<old_text line=75>
+Get AI-powered architecture analysis:
+
+```bash
+archgraph llm-analyze ./my_project
 ```
 
 ## Quick Start
@@ -139,28 +196,64 @@ Get statistics and insights about your codebase:
 archgraph analyze ./src
 ```
 
-### AI-Powered Analysis (New!)
+### GPT-5 AI-Powered Analysis
 
-**Architecture Analysis:**
+**Architecture Analysis with Reasoning Effort:**
 ```bash
 # Get comprehensive AI analysis of your architecture
-archgraph llm-analyze ./src
+archgraph llm-analyze ./src --reasoning-effort medium
+
+# Deep analysis with high reasoning (slower, more detailed)
+archgraph llm-analyze ./src --reasoning-effort high
 
 # Save analysis to file
-archgraph llm-analyze ./src --save analysis.md
+archgraph llm-analyze ./src --save analysis.md --reasoning-effort high
 ```
 
 **Diagram Suggestions:**
 ```bash
 # Get AI suggestions on which diagrams to generate
-archgraph llm-suggest ./src
+archgraph llm-suggest ./src --reasoning-effort medium
 ```
 
 **Dependency Explanation:**
 ```bash
 # Get natural language explanation of dependencies
-archgraph llm-explain ./src
+archgraph llm-explain ./src --reasoning-effort medium
 ```
+
+### MCP Server Tools
+
+When connected via MCP, AI assistants can use these tools:
+
+- `analyze_codebase` - Get project structure information
+- `generate_class_diagram` - Create class diagrams
+- `generate_dependency_graph` - Create dependency graphs
+- `generate_all_diagrams` - Generate all diagram types
+- `ai_analyze_architecture` - GPT-5 architecture analysis
+- `ai_suggest_diagrams` - AI recommendations for diagrams
+- `ai_explain_dependencies` - Natural language explanations
+
+**Example usage with Claude Desktop:**
+```
+Analyze the codebase at /path/to/project and suggest which diagrams to generate
+```
+
+See [docs/MCP_SETUP.md](docs/MCP_SETUP.md) for complete MCP server documentation.
+```
+
+<old_text line=444>
+## AI Features
+
+ArchGraph includes optional AI-powered features using Azure OpenAI:
+
+- **Architecture Analysis** - Get comprehensive insights about your codebase design
+- **Design Pattern Detection** - Automatically identify patterns in your code
+- **Recommendations** - Receive actionable suggestions for improvements
+- **Diagram Suggestions** - AI recommends which diagrams would be most valuable
+- **Natural Language Explanations** - Understand complex dependencies in plain English
+
+To enable AI features, set up Azure OpenAI credentials in a `.env` file.
 
 This displays:
 - Number of modules, classes, and functions
