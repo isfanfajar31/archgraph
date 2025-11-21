@@ -52,7 +52,7 @@ class LLMAnalyzer:
 
     def analyze_architecture(
         self,
-        max_completion_tokens: int = 4000,
+        max_completion_tokens: int = 8000,
         reasoning_effort: str = "medium",
     ) -> dict[str, Any]:
         """Analyze the overall architecture using LLM.
@@ -81,8 +81,8 @@ class LLMAnalyzer:
                 model=deployment,
                 messages=[
                     {
-                        "role": "system",
-                        "content": "You are an expert software architect analyzing Python codebases. Provide insightful, actionable analysis.",
+                        "role": "developer",
+                        "content": "Formatting re-enabled. You are an expert software architect analyzing Python codebases. Provide insightful, actionable analysis.",
                     },
                     {"role": "user", "content": prompt},
                 ],
@@ -90,7 +90,22 @@ class LLMAnalyzer:
                 reasoning_effort=reasoning_effort,
             )
 
-            content = response.choices[0].message.content
+            message = response.choices[0].message
+
+            # GPT-5 may put content in reasoning_content or content
+            content = message.content
+            if not content and hasattr(message, "reasoning_content"):
+                content = message.reasoning_content
+
+            if not content:
+                return {
+                    "error": "Empty response from GPT-5",
+                    "summary": "",
+                    "patterns": [],
+                    "issues": [],
+                    "recommendations": [],
+                }
+
             return self._parse_architecture_response(content)
 
         except Exception as e:
@@ -152,16 +167,21 @@ Provide:
                 model=deployment,
                 messages=[
                     {
-                        "role": "system",
-                        "content": "You are an expert in object-oriented design and Python best practices.",
+                        "role": "developer",
+                        "content": "Formatting re-enabled. You are an expert in object-oriented design and Python best practices.",
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_completion_tokens=1500,
+                max_completion_tokens=3000,
                 reasoning_effort=reasoning_effort,
             )
 
-            return {"analysis": response.choices[0].message.content}
+            message = response.choices[0].message
+            content = message.content
+            if not content and hasattr(message, "reasoning_content"):
+                content = message.reasoning_content
+
+            return {"analysis": content or "No analysis generated"}
 
         except Exception as e:
             return {"error": f"LLM analysis failed: {str(e)}"}
@@ -206,16 +226,26 @@ Be specific and actionable.
                 model=deployment,
                 messages=[
                     {
-                        "role": "system",
-                        "content": "You are an expert at software documentation and architecture visualization.",
+                        "role": "developer",
+                        "content": "Formatting re-enabled. You are an expert at software documentation and architecture visualization.",
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_completion_tokens=1000,
+                max_completion_tokens=3000,
                 reasoning_effort=reasoning_effort,
             )
 
-            return {"suggestions": response.choices[0].message.content}
+            message = response.choices[0].message
+
+            content = message.content
+            if not content and hasattr(message, "reasoning_content"):
+                content = message.reasoning_content
+
+            # Check for text attribute
+            if not content and hasattr(message, "text"):
+                content = message.text
+
+            return {"suggestions": content or "No suggestions generated"}
 
         except Exception as e:
             return {"error": f"LLM analysis failed: {str(e)}"}
@@ -251,16 +281,26 @@ Write in clear, accessible language.
                 model=deployment,
                 messages=[
                     {
-                        "role": "system",
-                        "content": "You are a technical writer explaining software architecture to developers.",
+                        "role": "developer",
+                        "content": "Formatting re-enabled. You are a technical writer explaining software architecture to developers.",
                     },
                     {"role": "user", "content": prompt},
                 ],
-                max_completion_tokens=1500,
+                max_completion_tokens=3000,
                 reasoning_effort=reasoning_effort,
             )
 
-            return response.choices[0].message.content or "No explanation generated"
+            message = response.choices[0].message
+
+            content = message.content
+            if not content and hasattr(message, "reasoning_content"):
+                content = message.reasoning_content
+
+            # Check for text attribute
+            if not content and hasattr(message, "text"):
+                content = message.text
+
+            return content or "No explanation generated"
 
         except Exception as e:
             return f"LLM analysis failed: {str(e)}"
@@ -421,7 +461,16 @@ Format your response clearly with these four sections.
         Returns:
             Structured dictionary
         """
-        # Simple parsing - split by section headers
+        # If content is empty or None, return empty structure
+        if not content or not content.strip():
+            return {
+                "summary": "",
+                "patterns": [],
+                "issues": [],
+                "recommendations": [],
+            }
+
+        # Simple parsing - split by bullet points
         sections = {
             "summary": "",
             "patterns": [],
@@ -429,77 +478,65 @@ Format your response clearly with these four sections.
             "recommendations": [],
         }
 
+        lines = content.split("\n")
+        summary_lines = []
+        pattern_lines = []
+        issue_lines = []
+        recommendation_lines = []
+
         current_section = None
-        current_content = []
 
-        for line in content.split("\n"):
-            line = line.strip()
+        for line in lines:
+            stripped = line.strip()
 
-            # Check for section headers
-            lower_line = line.lower()
-            if "architecture summary" in lower_line or "summary" in lower_line:
-                if current_section and current_content:
-                    self._add_to_section(sections, current_section, current_content)
-                current_section = "summary"
-                current_content = []
-            elif "design pattern" in lower_line or "patterns" in lower_line:
-                if current_section and current_content:
-                    self._add_to_section(sections, current_section, current_content)
+            # Detect section headers (case insensitive)
+            lower_line = stripped.lower()
+
+            # Check if this is a header line
+            if "design pattern" in lower_line and ":" in stripped:
                 current_section = "patterns"
-                current_content = []
-            elif "issue" in lower_line or "concern" in lower_line:
-                if current_section and current_content:
-                    self._add_to_section(sections, current_section, current_content)
+                continue
+            elif "potential issue" in lower_line and ":" in stripped:
                 current_section = "issues"
-                current_content = []
-            elif "recommendation" in lower_line or "improvement" in lower_line:
-                if current_section and current_content:
-                    self._add_to_section(sections, current_section, current_content)
+                continue
+            elif "recommendation" in lower_line and ":" in stripped:
                 current_section = "recommendations"
-                current_content = []
-            elif line and current_section:
-                current_content.append(line)
+                continue
+            elif stripped.startswith(("Summary:", "Architecture Summary:")):
+                current_section = "summary"
+                continue
 
-        # Add the last section
-        if current_section and current_content:
-            self._add_to_section(sections, current_section, current_content)
+            # Add content to appropriate section
+            if not stripped:
+                continue
 
-        # If no sections were parsed, put everything in summary
-        if not any(sections.values()):
-            sections["summary"] = content
+            if current_section == "patterns":
+                if stripped.startswith(("•", "-", "*", "✓", "⚠")):
+                    pattern_lines.append(stripped.lstrip("•-*✓⚠ "))
+            elif current_section == "issues":
+                if stripped.startswith(("•", "-", "*", "✓", "⚠")):
+                    issue_lines.append(stripped.lstrip("•-*✓⚠ "))
+            elif current_section == "recommendations":
+                if stripped.startswith(("•", "-", "*", "✓", "⚠")):
+                    recommendation_lines.append(stripped.lstrip("•-*✓⚠ "))
+            elif current_section == "summary":
+                summary_lines.append(stripped)
+            else:
+                # Before any section header, assume it's summary
+                summary_lines.append(stripped)
+
+        # Build result
+        sections["summary"] = "\n".join(summary_lines).strip()
+        sections["patterns"] = pattern_lines if pattern_lines else []
+        sections["issues"] = issue_lines if issue_lines else []
+        sections["recommendations"] = (
+            recommendation_lines if recommendation_lines else []
+        )
+
+        # If we have content but no structured sections, put everything in summary
+        if content.strip() and not any(
+            [pattern_lines, issue_lines, recommendation_lines]
+        ):
+            sections["summary"] = content.strip()
 
         return sections
-
-    def _add_to_section(
-        self, sections: dict[str, Any], section: str, content: list[str]
-    ) -> None:
-        """Add content to appropriate section.
-
-        Args:
-            sections: Sections dictionary
-            section: Section name
-            content: Content lines
-        """
-        text = "\n".join(content).strip()
-        if section == "summary":
-            sections["summary"] = text
-        else:
-            # Split by bullet points or numbered lists
-            items = []
-            for line in content:
-                line = line.strip()
-                if line and (
-                    line.startswith("-")
-                    or line.startswith("•")
-                    or line.startswith("*")
-                    or (len(line) > 2 and line[0].isdigit() and line[1] in ".)")
-                ):
-                    # Remove bullet/number prefix
-                    cleaned = line.lstrip("-•*0123456789.) ").strip()
-                    if cleaned:
-                        items.append(cleaned)
-                elif line and items:
-                    # Continuation of previous item
-                    items[-1] += " " + line
-
-            sections[section] = items if items else [text]
